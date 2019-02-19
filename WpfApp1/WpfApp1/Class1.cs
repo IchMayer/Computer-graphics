@@ -8,7 +8,6 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
-using System.Windows.Threading;
 using WpfApp1;
 
 namespace Example
@@ -32,39 +31,23 @@ namespace Example
         private static List<List<Point>> points { get; set; }
         private static int NumberActiv;
 
-        static MainWindow window;
-        static bool S;
-        static Thread r;
+        private static bool S;
+        private static GameWindow game;
+        private static bool q;
 
-        public static void HideUpr()
-        {
-            S = false;
-            //r.Abort();
-        }
-
-        public static void Show()
-        {
-            S = true;
-            r = new Thread(CreateSettings);
-            r.SetApartmentState(ApartmentState.STA);
-            r.Start();
-        }
-
-        public static void CreateSettings()
-        {
-            window = new MainWindow();
-            window.Show();
-            while (S) ;
-        }
+        public static Color color;
 
         [STAThread]
-        public static void Main()
+        public static void Start(MainWindow window)
         {
-            S = false;
+            q = true;
+            S = true;
             points = new List<List<Point>>();
             points.Add(new List<Point>());
+            color = Color.White;
 
-            using (var game = new GameWindow())
+
+            using (game = new GameWindow())
             {
 
                 game.Title = "Lab1";
@@ -101,9 +84,26 @@ namespace Example
                         if (NumberActiv < points.Count - 1)
                             NumberActiv++;
 
+                    if (e.Key == Key.Number1)
+                        color = Color.Red;
+                    if (e.Key == Key.Number2)
+                        color = Color.Orange;
+                    if (e.Key == Key.Number3)
+                        color = Color.Yellow;
+                    if (e.Key == Key.Number4)
+                        color = Color.Green;
+                    if (e.Key == Key.Number5)
+                        color = Color.Cyan;
+                    if (e.Key == Key.Number6)
+                        color = Color.Blue;
+                    if (e.Key == Key.Number7)
+                        color = Color.Purple;
+
                     if (e.Key == Key.Escape)
                     {
                         S = false;
+                        q = false;
+                        //window.CloseWindow();
                         game.Exit();
                     }
                 };
@@ -111,6 +111,19 @@ namespace Example
                 game.UpdateFrame += (sender, e) =>
                 {
                     var state = Keyboard.GetState();
+
+                    if (state[Key.T])
+                        color = Color.FromArgb(Math.Min(255, color.R + 3), color.G, color.B);
+                    if (state[Key.G])
+                        color = Color.FromArgb(color.R, Math.Min(255, color.G + 3), color.B);
+                    if (state[Key.B])
+                        color = Color.FromArgb(color.R, color.G, Math.Min(255, color.B + 3));
+                    if (state[Key.Y])
+                        color = Color.FromArgb(Math.Max(0, color.R - 3), color.G, color.B);
+                    if (state[Key.H])
+                        color = Color.FromArgb(color.R, Math.Max(0, color.G - 3), color.B);
+                    if (state[Key.N])
+                        color = Color.FromArgb(color.R, color.G, Math.Max(0, color.B - 3));
 
                     if (state[Key.D])
                         Move(0.05f, 0);
@@ -127,17 +140,27 @@ namespace Example
                     if (state[Key.F1])
                     {
                         if (S)
-                            HideUpr();
+                        {
+                            window.Hide(); S = false;
+                        }
                         else
-                            Show();
+                        {
+                            window.Show(); S = true;
+                        }
                         Thread.Sleep(200);
                     }
 
                     if (state[Key.E])
-                        Turn(Math.PI / 18f, game);
+                        Turn(Math.PI / 18f);
 
                     if (state[Key.Q])
-                        Turn(Math.PI / -18f, game);
+                        Turn(Math.PI / -18f);
+
+                    if (state[Key.R])
+                        Scale(1.111111111111111); // 1/0.9
+
+                    if (state[Key.F])
+                        Scale(0.9);
                 };
 
                 game.RenderFrame += (sender, e) =>
@@ -161,9 +184,15 @@ namespace Example
             }
         }
 
+        public static void Close()
+        {
+            if(q)
+                game.Close();
+        }
+
         #region Взаимодействие с фигурой
         //Поворот фигуры
-        private static void Turn(double alfa, GameWindow game)
+        public static void Turn(double alfa)
         {
             float x, y;
             Point Center = new Point();
@@ -185,7 +214,7 @@ namespace Example
         }
 
         //Движение фигуры
-        private static void Move(float dx, float dy)
+        public static void Move(float dx, float dy)
         {
             for (int i = 0; i < points[NumberActiv].Count; i++)
             {
@@ -193,6 +222,29 @@ namespace Example
                 points[NumberActiv][i].y += dy;
             }
         }
+
+        //Растяжение
+        public static void Scale(double cScale)
+        {
+            float x, y;
+            Point Center = new Point();
+            for (int i = 0; i < points[NumberActiv].Count; i++)
+            {
+                Center.x += points[NumberActiv][i].x;
+                Center.y += points[NumberActiv][i].y;
+            }
+            Center.x /= points[NumberActiv].Count;
+            Center.y /= points[NumberActiv].Count;
+
+            for (int i = 0; i < points[NumberActiv].Count; i++)
+            {
+                x = (points[NumberActiv][i].x - Center.x) * Convert.ToSingle(cScale);
+                y = (points[NumberActiv][i].y - Center.y) * Convert.ToSingle(cScale);
+                points[NumberActiv][i].x = x + Center.x;
+                points[NumberActiv][i].y = y + Center.y;
+            }
+        }
+
         #endregion
 
         #region Вспомогательные функции
@@ -251,6 +303,7 @@ namespace Example
         //Добавление точки
         private static void PushPoint(List<Point> points, Point point)
         {
+            point.color = color;
             if (points.Count < 3)
             {
                 points.Add(point);
@@ -315,19 +368,16 @@ namespace Example
 
         private static void PrintFigure(List<Point> points, bool activ = false)
         {
-            GL.Begin(PrimitiveType.Polygon);
-            for (int i = 0; i < points.Count; i++)
-            {
-                GL.Color4(Color.FromArgb(i * 255 / points.Count));
-                GL.Vertex2(points[i].x, points[i].y);
-                //points[i].color = Color.FromArgb(i * 255 / points.Count);
-                //PrintPolygon(points);
-            }
-
-            GL.End();
+            //for (int i = 0; i < points.Count; i++)
+            //{
+            //    GL.Color4(Color.FromArgb(i * 255 / points.Count));
+            //    GL.Vertex2(points[i].x, points[i].y);
+            //    points[i].color = Color.FromArgb(i * 255 / points.Count);
+            //}
+            PrintPolygon(points);
 
             GL.Begin(PrimitiveType.LineLoop);
-            if (activ)
+            if (activ) 
                 GL.Color3(Color.Magenta);
             else
                 GL.Color3(Color.Red);
@@ -349,7 +399,6 @@ namespace Example
             bool res = angle(new Point(points[0].x - points[points.Count - 1].x, points[0].y - points[points.Count - 1].y), new Point(points[1].x - points[points.Count - 1].x, points[1].y - points[points.Count - 1].y));
 
             //Обход вправо ->
-            toprint.Add(points[0]);
             toprint.Add(points[1]);
             for (int i = 1; i < points.Count - 2; i++)
             {
@@ -357,6 +406,7 @@ namespace Example
                     toprint.Add(points[i + 1]);
             }
             toprint.Add(points[points.Count - 1]);
+            toprint.Add(points[0]);
 
             //Обход влево ->
             toprint2.Add(toprint[toprint.Count - 1]);
@@ -377,12 +427,10 @@ namespace Example
             GL.End();
 
             toprint.Clear();
-            for (int i = 0, j = toprint2.Count - 1; i < points.Count - 1; i++)
+            for (int i = 0, j = toprint2.Count; i < points.Count - 1; i++)
             {
-                if (points[i] == toprint2[j])
-                {
+                if (j >= 0 && points[i] == toprint2[j % toprint2.Count])
                     j--;
-                }
                 else
                 {
                     if (points[i - 1] == toprint2[j + 1])

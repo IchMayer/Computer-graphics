@@ -5,17 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
-        Title="Управление" Height="450" Width="320.8">
+        Title="Управление" Height="450" Width="320.8" Topmost="True" Left="0" Top="0" MinWidth="320" MinHeight="450" HorizontalAlignment="Left" VerticalAlignment="Top">
     <Grid>
 
-        <TextBlock Height="88" Margin="10,10,186.4,322"><Run Text="Перемещение"/><Run Text=":"/><LineBreak/><Run Text="    W - "/><Run Text="Вперед"/><LineBreak/><Run Text="    "/><Run Text=" "/><Run Text="A - "/><Run Text="Налево"/><LineBreak/><Run Text="     "/><Run Text="S"/><Run Text=" - "/><Run Text="Назад"/><LineBreak/><Run Text="     "/><Run Text="D -"/><Run Text=" Налево"/></TextBlock>
-        <TextBlock Margin="10,103,186.4,264" Height="53"><Run Text="Вращение"/><Run Text=":"/><LineBreak/><Run Text="    Q - "/><Run Text="Налево"/><LineBreak/><Run Text="    "/><Run Text="E"/><Run Text=" "/><Run Text="-"/><Run Text=" Направо"/></TextBlock>
+        <TextBlock Height="88" Margin="10,10,186.4,322"><Run Text="Перемещение"/><Run Text=":"/><LineBreak/></TextBlock>
+        <TextBlock Margin="10,103,186.4,264" Height="53"><Run Text="Вращение"/><Run Text=":"/><LineBreak/></TextBlock>
         <TextBlock HorizontalAlignment="Left" Margin="10,161,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="52" Width="118"><Run Text="Масштабирование"/><Run Text=":"/><LineBreak/><Run Text="    R - "/><Run Text="Увеличить"/><LineBreak/><Run Text="    "/><Run Text="F "/><Run Text="- "/><Run Text="Уменьшить"/></TextBlock>
         <TextBlock HorizontalAlignment="Left" Margin="133,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="93" Width="171"><Run Text="Добавление"/><Run Text=":"/><LineBreak/><Run Text="     "/><Run Text="RB - "/><Run Text="Д"/><Run Text="обваить новую точку в выбранную фигуру"/><LineBreak/><Run Text="     "/><Run Text="LB -"/><Run Text=" "/><Run Text="Д"/><Run Text="обавить новую фигуру"/></TextBlock>
         <TextBlock HorizontalAlignment="Left" Margin="133,108,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="48" Width="171"><Run Text="Переключение фигур"/><Run Text=":"/><LineBreak/><Run Text="    "/><Run Text="Left "/><Run Text="  "/><Run Text="- "/><Run Text="Предыдущая"/><LineBreak/><Run Text="    "/><Run Text="Right "/><Run Text="- Слудующая"/></TextBlock>
         <TextBlock HorizontalAlignment="Left" Margin="133,161,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="52" Width="171"><Run Text="Выбранная фигура "/><Run Text="обводится"/><Run Text=" синим, остальные красным"/></TextBlock>
         <TextBlock HorizontalAlignment="Left" Margin="10,218,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="133" Width="118"><Run Text="Выбор цвета"/><Run Text=":"/><LineBreak/><Run Text="    1 - Красный"/><LineBreak/><Run Text="    2 - Оранживый"/><LineBreak/><Run Text="    3 - Желтый"/><LineBreak/><Run Text="    4 - Зеленный"/><LineBreak/><Run Text="    5 - Голубой"/><LineBreak/><Run Text="    6 - Синий"/><LineBreak/><Run Text="    7 - Феолетовый"/></TextBlock>
         <TextBlock HorizontalAlignment="Left" Margin="10,356,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="54" Width="118"><Run Text="Выход"/><Run Text=":"/><LineBreak/><Run Text="    Q - "/><Run Text="Выход из приложения"/></TextBlock>
+        <Button Background="Transparent" Content="W - Вперед"  HorizontalAlignment="Left" Margin="18,25,0,0" VerticalAlignment="Top" Width="78" Click="ButtonW"/>
+        <Button Background="Transparent" Content="A - Налево" HorizontalAlignment="Left" Margin="18,44,0,0" VerticalAlignment="Top" Width="78" Click="ButtonA"/>
+        <Button Background="Transparent" Content="S - Назад   " HorizontalAlignment="Left" Margin="18,63,0,0" VerticalAlignment="Top" Width="78" Click="ButtonS"/>
+        <Button Background="Transparent" Content="D - Напрово" HorizontalAlignment="Left" Margin="18,82,0,0" VerticalAlignment="Top" Width="78" Click="ButtonD"/>
+        <Button Background="Transparent" Content="Q - Нелево" HorizontalAlignment="Left" Margin="18,117,0,0" VerticalAlignment="Top" Width="78" Click="ButtonQ"/>
+        <Button Background="Transparent" Content="E - Направо" HorizontalAlignment="Left" Margin="18,136,0,0" VerticalAlignment="Top" Width="78" Click="ButtonE"/>
+        <TextBox x:Name="Color" HorizontalAlignment="Left" Height="23" TextWrapping="Wrap" VerticalAlignment="Top" Width="27" Margin="276,386,0,0" TextChanged="TextBox_TextChanged"/>
 
     </Grid>
 </Window>
