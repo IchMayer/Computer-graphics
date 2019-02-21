@@ -29,7 +29,9 @@ namespace Example
     partial class MyApplication
     {
         private static List<List<Point>> points { get; set; }
-        private static int NumberActiv;
+        public static int NumberActiv;
+        public static int n;
+        public static int r;
 
         private static bool S;
         private static GameWindow game;
@@ -42,10 +44,12 @@ namespace Example
         {
             q = true;
             S = true;
+            n = 0;
+            r = 0;
+
             points = new List<List<Point>>();
             points.Add(new List<Point>());
             color = Color.White;
-
 
             using (game = new GameWindow())
             {
@@ -71,6 +75,7 @@ namespace Example
                     {
                         points.Add(new List<Point>());
                         NumberActiv = points.Count - 1;
+                        n++;
                     }
 
                 };
@@ -83,6 +88,14 @@ namespace Example
                     if (e.Key == Key.Right)
                         if (NumberActiv < points.Count - 1)
                             NumberActiv++;
+
+                    if (e.Key == Key.Up)
+                        if (r < 1)
+                            r++;
+                    if (e.Key == Key.Down)
+                        if (r > -1)
+                            r--;
+
 
                     if (e.Key == Key.Number1)
                         color = Color.Red;
