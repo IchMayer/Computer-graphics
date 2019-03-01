@@ -94,6 +94,15 @@ namespace Example
                                 PushPoint(points[NumberActiv], new Point((e.X - game.Width / 2f) / game.Width * 2f, (game.Height / 2f - e.Y) / game.Height * 2f));
                                 break;
                             case -1:
+                                Point p = new Point((e.X - game.Width / 2f) / game.Width * 2f, (game.Height / 2f - e.Y) / game.Height * 2f);
+                                for (int i = 0; i < points.Count; i++)
+                                {
+                                    if (PointInPolygon(points[i], p ))
+                                    {
+                                        NumberActiv = i;
+                                        r = 0;
+                                    }
+                                }
                                 ActivPoint = 0;
                                 break;
                         }
@@ -164,7 +173,8 @@ namespace Example
                     if (state[Key.N])
                         color = Color.FromArgb(color.R, color.G, Math.Max(0, color.B - 3));
 
-                    if ((r == 1 || r == -1) && (state[Key.N] || state[Key.H] || state[Key.Y] || state[Key.B] || state[Key.G] || state[Key.T]))
+                    if ((r == 1 || r == -1) && (state[Key.N] || state[Key.H] || state[Key.Y] || state[Key.B] || state[Key.G] || state[Key.T] || 
+                    state[Key.Number1] || state[Key.Number2] || state[Key.Number3] || state[Key.Number4] || state[Key.Number5] || state[Key.Number6] || state[Key.Number7]))
                     {
                         if(r == 1)
                             points[NumberActiv][ActivPoint].color = color;
@@ -368,6 +378,35 @@ namespace Example
                 return true;
             else
                 return false;
+        }
+
+        //Проверка на точку внутри полигона
+        private static bool PointInPolygon(List<Point> polygon, Point p)
+        {
+            List<Point> toprint = new List<Point>();
+
+            for (int i = 0; i < polygon.Count; i++)
+                toprint.Add(polygon[i]);
+
+            List<Point> toprint2 = new List<Point>();
+
+            bool b, f;
+
+            while (toprint.Count >= 3)
+            {
+                Triangulation(ref toprint, ref toprint2);
+
+                f = false;
+                b = angle(p - toprint2[toprint2.Count - 1], toprint2[0] - toprint2[toprint2.Count - 1]);
+
+                for (int i = 1; i < toprint2.Count; i++)
+                    if (b != angle(p - toprint2[i - 1], toprint2[i] - toprint2[i - 1]))
+                        f = true;
+
+                if (!f)
+                    return true;
+            }
+            return false;
         }
 
         //Пересичения прямой с концамы p1 и p2 с фигурой polygon  
