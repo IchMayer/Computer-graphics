@@ -24,12 +24,21 @@ namespace Example
             x = px;
             y = py;
         }
+        static public Point operator-(Point p1, Point p2)
+        {
+            Point point = new Point();
+            point.x = p1.x - p2.x;
+            point.y = p1.y - p2.y;
+            return point;
+        }
+
     }
 
     partial class MyApplication
     {
         private static List<List<Point>> points { get; set; }
         public static int NumberActiv;
+        public static int ActivPoint;
         public static int n;
         public static int r;
 
@@ -67,10 +76,27 @@ namespace Example
                     GL.Viewport(0, 0, game.Width, game.Height);
                 };
 
+                game.MouseMove += (sender, e) =>
+                {
+                    if (r == 1)
+                        ActivPoint = FindNearPoint(points[NumberActiv], new Point((e.X - game.Width / 2f) / game.Width * 2f, (game.Height / 2f - e.Y) / game.Height * 2f));
+                };
+
                 game.MouseDown += (sender, e) =>
                 {
                     if (e.Button == MouseButton.Left)
-                        PushPoint(points[NumberActiv], new Point((e.X - game.Width / 2f) / game.Width * 2f, (game.Height / 2f - e.Y) / game.Height * 2f));
+                        switch (r)
+                        {
+                            case 1:
+                                break;
+                            case 0:
+                                ActivPoint = 0;
+                                PushPoint(points[NumberActiv], new Point((e.X - game.Width / 2f) / game.Width * 2f, (game.Height / 2f - e.Y) / game.Height * 2f));
+                                break;
+                            case -1:
+                                ActivPoint = 0;
+                                break;
+                        }
                     if (e.Button == MouseButton.Right)
                     {
                         points.Add(new List<Point>());
@@ -138,6 +164,15 @@ namespace Example
                     if (state[Key.N])
                         color = Color.FromArgb(color.R, color.G, Math.Max(0, color.B - 3));
 
+                    if ((r == 1 || r == -1) && (state[Key.N] || state[Key.H] || state[Key.Y] || state[Key.B] || state[Key.G] || state[Key.T]))
+                    {
+                        if(r == 1)
+                            points[NumberActiv][ActivPoint].color = color;
+                        if(r == -1)
+                            for (int i = 0; i < points[NumberActiv].Count; i++)
+                                points[NumberActiv][i].color = color;
+                    }
+
                     if (state[Key.D])
                         Move(0.05f, 0);
 
@@ -189,6 +224,18 @@ namespace Example
 
                     PrintFigure(points[NumberActiv], true);
 
+                    if(r == 1 && points[NumberActiv].Count > ActivPoint)
+                    {
+                        GL.Begin(PrimitiveType.Polygon);
+                        GL.Color3(Color.DarkRed);
+                        double px = 5d / game.Width, py = 5d / game.Height;
+                        GL.Vertex2(points[NumberActiv][ActivPoint].x + px, points[NumberActiv][ActivPoint].y + py );
+                        GL.Vertex2(points[NumberActiv][ActivPoint].x + px, points[NumberActiv][ActivPoint].y - py);
+                        GL.Vertex2(points[NumberActiv][ActivPoint].x - px, points[NumberActiv][ActivPoint].y - py);
+                        GL.Vertex2(points[NumberActiv][ActivPoint].x - px, points[NumberActiv][ActivPoint].y + py);
+                        GL.End();
+                    }
+
                     game.SwapBuffers();
                 };
 
@@ -202,6 +249,30 @@ namespace Example
             if(q)
                 game.Close();
         }
+
+        #region Взаимодействие с точкой
+
+        //Поиск ближайшей точки
+        private static int FindNearPoint(List<Point> figure, Point mouse)
+        {
+            if (figure.Count < 2)
+                return 0;
+            double min = Scal(mouse, figure[0]);
+            int k = 0;
+            double scal;
+            for (int i = 1; i < figure.Count; i++)
+            {
+                scal = Scal(mouse, figure[i]);
+                if(scal < min)
+                {
+                    min = scal;
+                    k = i;
+                }
+            }
+            return k;
+        }
+
+        #endregion
 
         #region Взаимодействие с фигурой
         //Поворот фигуры
@@ -229,10 +300,23 @@ namespace Example
         //Движение фигуры
         public static void Move(float dx, float dy)
         {
-            for (int i = 0; i < points[NumberActiv].Count; i++)
+            switch (r)
             {
-                points[NumberActiv][i].x += dx;
-                points[NumberActiv][i].y += dy;
+                case 1:
+                    if(points[NumberActiv].Count > ActivPoint)
+                    {
+                        points[NumberActiv][ActivPoint].x += dx;
+                        points[NumberActiv][ActivPoint].y += dy;
+                    }
+                    break;
+                case 0:
+                case -1:
+                    for (int i = 0; i < points[NumberActiv].Count; i++)
+                    {
+                        points[NumberActiv][i].x += dx;
+                        points[NumberActiv][i].y += dy;
+                    }
+                    break;
             }
         }
 
@@ -307,6 +391,24 @@ namespace Example
                 return false;
             else
                 return true;
+        }
+
+        //Проверка направления обхода фигуры(по часовой или против)
+        private static bool Clockwise(List<Point> points)
+        {
+            int sum = 0;
+            if (angle(points[0] - points[points.Count - 1] , points[1] - points[0]))
+                sum++;
+            else
+                sum--;
+            for (int i = 2; i < points.Count; i++)
+            {
+                if (angle(points[i - 1] - points[i - 2], points[i] - points[i - 1]))
+                    sum++;
+                else
+                    sum--;
+            }
+            return sum > 0;
         }
 
         #endregion
@@ -404,58 +506,99 @@ namespace Example
         {
             if (points.Count < 3)
                 return;
+
             List<Point> toprint = new List<Point>();
+
+            for (int i = 0; i < points.Count; i++)
+                toprint.Add(points[i]);
+
             List<Point> toprint2 = new List<Point>();
 
-            //angle(new Point(points[1].x - points[0].x, points[1].y - points[0].y), new Point(points[2].x - points[0].x, points[2].y - points[0].y), false);
-
-            bool res = angle(new Point(points[0].x - points[points.Count - 1].x, points[0].y - points[points.Count - 1].y), new Point(points[1].x - points[points.Count - 1].x, points[1].y - points[points.Count - 1].y));
-
-            //Обход вправо ->
-            toprint.Add(points[1]);
-            for (int i = 1; i < points.Count - 2; i++)
+            while (toprint.Count >= 3)
             {
-                if (res == angle(new Point(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y), new Point(points[i + 1].x - points[i - 1].x, points[i + 1].y - points[i - 1].y)))
-                    toprint.Add(points[i + 1]);
-            }
-            toprint.Add(points[points.Count - 1]);
-            toprint.Add(points[0]);
+                Triangulation(ref toprint, ref toprint2);
 
-            //Обход влево ->
-            toprint2.Add(toprint[toprint.Count - 1]);
-            for (int i = toprint.Count - 1; i > 2; i--)
-            {
-                if (res != angle(new Point(toprint[i].x - toprint[(i + 1) % toprint.Count].x, toprint[i].y - toprint[(i + 1) % toprint.Count].y), new Point(toprint[i - 1].x - toprint[(i + 1) % toprint.Count].x, toprint[i - 1].y - toprint[(i + 1) % toprint.Count].y)))
-                    toprint2.Add(toprint[i - 1]);
-            }
-            toprint2.Add(toprint[1]);
-            toprint2.Add(toprint[0]);
-
-            GL.Begin(PrimitiveType.Polygon);
-            for (int i = 0; i < toprint2.Count; i++)
-            {
-                GL.Color3(toprint2[i].color);
-                GL.Vertex2(toprint2[i].x, toprint2[i].y);
-            }
-            GL.End();
-
-            toprint.Clear();
-            for (int i = 0, j = toprint2.Count; i < points.Count - 1; i++)
-            {
-                if (j >= 0 && points[i] == toprint2[j % toprint2.Count])
-                    j--;
-                else
+                GL.Begin(PrimitiveType.Polygon);
+                for (int i = 0; i < toprint2.Count; i++)
                 {
-                    if (points[i - 1] == toprint2[j + 1])
-                        toprint.Add(points[i - 1]);
-                    toprint.Add(points[i]);
-                    if (points[i + 1] == toprint2[j])
-                        toprint.Add(points[i + 1]);
+                    GL.Color3(toprint2[i].color);
+                    GL.Vertex2(toprint2[i].x, toprint2[i].y);
+                }
+                GL.End();
+
+                GL.Begin(PrimitiveType.LineLoop);
+                GL.Color3(Color.DarkGreen);
+                for (int i = 0; i < toprint2.Count; i++)
+                {
+                    GL.Vertex2(toprint2[i].x, toprint2[i].y);
+                }
+                GL.End();
+            }
+
+        }
+
+        //Проверака на выпуклость
+        private static bool CheckConvex(List<Point> points, int i, bool b)
+        {
+            return angle(points[i] - points[(i - 1 + points.Count) % points.Count], points[(i + 1) % points.Count] -  points[i]) == b;
+        }
+
+        //Проверка на ухо
+        private static bool CheckEar(List<Point> points, int i)
+        {
+            return CrossingPolygon(points, points[(i - 1 + points.Count) % points.Count], points[(i + 1) % points.Count]);
+        }
+
+        //Триангуляция пногоугольника
+        private static void Triangulation(ref List<Point> points, ref List<Point> triangle)
+        {
+            if(points.Count <= 3)
+            {
+                triangle.Clear();
+                for (int j = 0; j < points.Count; j++)
+                    triangle.Add(points[j]);
+                points.Clear();
+                return;
+            }
+            int i;
+            bool b = Clockwise(points);
+            bool f = false;
+            for (i = 0; i < points.Count; i++)
+            {
+                if(CheckConvex(points, i, b) && CheckEar(points, i))
+                {
+                    f = true;
+                    break;
                 }
             }
 
-            PrintPolygon(toprint);
 
+            if (f)
+            {
+                triangle.Clear();
+                triangle.Add(points[i]);
+                triangle.Add(points[(i + 1) % points.Count]);
+                triangle.Add(points[(i - 1 + points.Count) % points.Count]);
+
+                points.Remove(points[i]);
+            }
+            else
+                points.Clear();
+
+
+            //do
+            //{
+            //    Random r = new Random();
+            //    i = r.Next(points.Count);
+            //} while (!(CheckConvex(points, i, b) && CheckEar(points, i)));
+
+
+            //triangle.Clear();
+            //triangle.Add(points[i]);
+            //triangle.Add(points[(i + 1) % points.Count]);
+            //triangle.Add(points[(i - 1 + points.Count) % points.Count]);
+
+            //points.Remove(points[i]);
         }
 
         #endregion
